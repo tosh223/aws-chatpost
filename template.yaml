@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  chatpost
+
+  Parameters: 
+    GoogleChatWebhookUrl:
+      Description: Google Chat Webhook URL
+      Type: String
+      Default: "write your webhook URL"
+    GoogleChatCardImageUrl:
+      Description: Google Chat Card Image URL
+      Type: String
+      Default: "write image URL"
+
+Resources:
+  ########################################
+  # Post Results to Google Chat Webhook
+  ########################################
+  FunctionChatPost:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: chatpost
+      CodeUri: src/chatpost/
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.7
+      MemorySize: 128
+      Tracing: Active
+      Timeout: 30
+      Environment:
+        Variables: 
+          GOOGLE_CHAT_WEBHOOK_URL: !Ref GoogleChatWebhookUrl
+          CARD_IMAGE_URL: !Ref GoogleChatCardImageUrl
+      Events:
+        CloudWatchEvent:
+          Type: CloudWatchEvent
+          Properties:
+            Pattern: 
+              source: 
+                - aws.states
+              detail-type: 
+                - Step Functions Execution Status Change
+              detail: 
+                status: 
+                  - ABORTED
+                  - FAILED
+                  - TIMED_OUT
+                stateMachineArn: 
+                  - 'your-stateMachineArn'
